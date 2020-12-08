@@ -1,1 +1,1 @@
-from roaskins.roaskins import Skins, Rival
+from roaskins import Skins, Rival
