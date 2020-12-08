@@ -3,13 +3,12 @@ from distutils.core import setup
 setup(
     name = 'roaskins',
     packages = ['roaskins'],
-    version = '0.3',
+    version = '0.31',
     license = 'MIT',
     description = 'Rivals of Aether skin and color code library',
     author = 'Julian Hartmer',
     author_email = 'j.hartmer@googlemail.com',
     url = 'https://github.com/ErrorThreeOThree/roaskins',
-    download_url = 'https://github.com/ErrorThreeOThree/roaskins/archive/v_3.tar.gz',
     keywords = ['roa', 'Rivals', 'of', 'Aether', 'skin'],
     install_requires = [
         'opencv-python',
