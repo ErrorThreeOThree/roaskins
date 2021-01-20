@@ -7,7 +7,9 @@ import operator
 import errno
 import random
 import re
+import importlib.resources
 from typing import List
+import pkg_resources
 
 class ColorRGB:
     def __init__(self, r : np.uint8, g : np.uint8, b : np.uint8):
@@ -45,18 +47,24 @@ class Rival:
         self.aliases = aliases
         self.data_dir = data_dir
         self.shades = []
-        for filename in os.listdir(self.data_dir):
-            if not filename.endswith(".png"):
-                continue
-            if filename.startswith("shade_"):
-                shade = cv2.imread(self.data_dir + filename, cv2.IMREAD_UNCHANGED)
-                if shade is None:
-                    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self.data_dir + filename)
-                self.shades.append(shade)
-            elif filename.startswith("static"):
-                self.shade_static = cv2.imread(self.data_dir + "/" + filename, cv2.IMREAD_UNCHANGED)
-                if self.shade_static is None:
-                    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self.data_dir + filename)
+        shade_num = 0
+        shade_f = self.data_dir + "/shade_" + str(shade_num) + ".png"
+        while os.path.isfile(shade_f):
+            print(shade_f)
+            shade = cv2.imread(shade_f, cv2.IMREAD_UNCHANGED)
+            if shade is None:
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), shade_f)
+            self.shades.append(shade)
+            shade_num += 1
+            shade_f = self.data_dir + "/shade_" + str(shade_num) + ".png"
+        
+        static_f = self.data_dir + "/static.png"
+        if os.path.isfile(static_f):
+            self.shade_static = cv2.imread(static_f, cv2.IMREAD_UNCHANGED)
+            if self.shade_static is None:
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), static_f)
+        else:
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), static_f)
         self.shade_num = len(self.shades)
 
     def __str__(self):
@@ -219,22 +227,26 @@ def rival_decoder(obj):
 
 def load_rival_from_json(file : str):
     try:
-        f = open(file)
+        f = open(file, "r")
         rival = json.loads(f.read())
         f.close()
         return rival
     except OSError:
+        print("exception")
         return
 
-# load rivals
-rivals = {}
-for filename in os.listdir("/media/share"):
-    if filename != "rival.json":
-        rival_dict = load_rival_from_json("data/"+filename+"/rival.json")
-        if rival_dict:
-            rival = Rival(rival_dict['name'], rival_dict['aliases'], rival_dict['data_dir'])
-            rivals[rival.name] = rival
+_rivals = {}
+
+def rivals():
+    if _rivals == {}:
+        for filename in os.listdir(os.path.dirname(__file__) + "/data/"):
+            rival_dict = load_rival_from_json(os.path.dirname(__file__) + "/data/"+filename+"/rival.json")
+            print(rival_dict)
+            if rival_dict:
+                rival = Rival(rival_dict['name'], rival_dict['aliases'], os.path.dirname(__file__)+"/"+rival_dict['data_dir'])
+                _rivals[rival.name] = rival
+    return _rivals
 
 if __name__ == "__main__":
-    for rival in rivals.values():
+    for rival in _rivals.values():
         rival.create_random_skin().show_preview()
