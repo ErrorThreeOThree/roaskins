@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name = 'roaskins',
     packages = ['roaskins'],
-    version = '0.41',
+    version = '0.42',
     license = 'MIT',
     description = 'Rivals of Aether skin and color code library',
     author = 'Julian Hartmer',

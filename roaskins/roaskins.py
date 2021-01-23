@@ -40,6 +40,8 @@ class ColorHSV:
         return (self.h, self.s, self.v)
 
 detection_color_hsv = ColorHSV(180/2, 256/2, 256/2)
+# hotfix: ranno's s and v got clipped
+detection_color_hsv_hotfix_ranno = ColorHSV(258/360*180, 72*256/100, 72*256/100)
 
 class Rival:
     def __init__(self, name, aliases, data_dir):
@@ -100,7 +102,7 @@ class Rival:
             checksum += (i + 102) * g
             b = int(colors_hex_list[i * 3 + 2], 16) 
             checksum += (i + 103) * b
-            colors.append((r,g,b))
+            colors.append(ColorRGB(r,g,b))
         checksum = checksum % 256
         # check if checksum is present
         if (len(colors_hex_list) > self.shade_num * 3 and \
@@ -142,11 +144,15 @@ class Skin:
             shade_hsv = cv2.cvtColor(shade, cv2.COLOR_BGR2HSV)
             h,s,v = cv2.split(shade_hsv)
             
-            offs = np.subtract(detection_color_hsv.to_cv_tuple(), colors_hsv[curr_color].to_cv_tuple())
+            if (self.rival.name == "Ranno" and curr_color == 0):
+                offs = np.subtract(detection_color_hsv_hotfix_ranno.to_cv_tuple(), colors_hsv[curr_color].to_cv_tuple())
+            else:
+                offs = np.subtract(detection_color_hsv.to_cv_tuple(), colors_hsv[curr_color].to_cv_tuple())
             lut_h = np.arange(256, dtype = np.dtype('uint8'))
             lut_v = np.arange(256, dtype = np.dtype('uint8'))
             lut_s = np.arange(256, dtype = np.dtype('uint8'))
             for i in range(256):
+                # increment by one, see https://rivalsofaether.com/colors-gml/
                 lut_h[i] = np.uint8(max(0, (min(180, (i - offs[0]) % 180))))
                 lut_s[i] = np.uint8(max(0, (min(255, (i - offs[1])))))
                 lut_v[i] = np.uint8(max(0, (min(255, (i - offs[2])))))
