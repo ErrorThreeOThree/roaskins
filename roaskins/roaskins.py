@@ -11,40 +11,136 @@ import importlib.resources
 from typing import List
 import pkg_resources
 
+"""
+roaskins.py
+====================================
+Fan-made Rivals of Aether skin generation library.
+"""
+
+
 class ColorRGB:
+    """
+|
+
+    Class to represent RGB colors
+
+    Attributes
+    ----------
+
+    r: np.uint8
+        red color value
+
+    g: np.uint8
+        green color value
+
+    b: np.uint8
+        blue color value
+
+
+    """
+
     def __init__(self, r : np.uint8, g : np.uint8, b : np.uint8):
-        self.r = r
-        self.g = g
-        self.b = b
+        """
+        Create RGB Color object from red, green and blue value.
+
+        """
     def to_hsv(self):
+        """
+        Create equivalent ColorHSV object.
+        
+        """
         img = np.zeros((1,1,3), np.uint8)
         # opencv expects bgr not rgb
         img[:] = (self.b, self.g, self.r)
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         return ColorHSV(img_hsv[0,0][0], img_hsv[0,0][1], img_hsv[0,0][2])
     def to_cv_tuple(self):
+        """
+        Return opencv color format (bgr tuple).
+        
+        """
         return (self.b, self.g, self.r)
 
+
 class ColorHSV:
+    """
+|
+
+    Class to represent HSV colors.
+
+    Attributes
+    ----------
+
+    h: np.uint8
+        hue color value
+
+    s: np.uint8
+        saturation color value
+
+    b: np.uint8
+        blue color value
+
+
+    """
     def __init__(self, h : np.uint8, s : np.uint8, v : np.uint8):
+        """
+        Create HSV Color object from hue, saturation and value value.
+        
+        """
         self.h = h
         self.s = s
         self.v = v
     def to_rgb():
+        """
+        Create equivalent ColorRGB object.
+        
+        """
         img = np.zeros((1,1,3), np.uint8)
         # opencv expects bgr not rgb
         img[:] = (self.h, self.s, self.v)
         img_hsv = cv2.cvtColor(img, cv2.COLOR_HSV2RGB)
         return ColorRGB(img_hsv[0,0][2], img_hsv[0,0][1], img_hsv[0,0][0])
     def to_cv_tuple(self):
+        """
+        Return opencv color format (hsv tuple).
+        
+        """
         return (self.h, self.s, self.v)
+
 
 detection_color_hsv = ColorHSV(180/2, 256/2, 256/2)
 # hotfix: ranno's s and v got clipped
 detection_color_hsv_hotfix_ranno = ColorHSV(258/360*180, 72*256/100, 72*256/100)
 
+
 class Rival:
+    """
+    Class to represent Rivals of Aether characters, also called Rivals.
+
+    Attributes
+    ----------
+
+    name: str
+        The name of the rival
+    
+    aliases: [str]
+        List of alternate names of the rival
+
+
+    """
     def __init__(self, name, aliases, data_dir):
+        """
+        Create new rival object. Rivals are automatically generated when the rivals() function is called. You propably do not want to call this function unless you know what you are doing.
+        
+        Parameters
+        ----------
+
+        name: str
+
+        aliases: [str]
+
+        data_dir: str
+        """
         self.name = name
         self.aliases = aliases
         self.data_dir = data_dir
@@ -52,7 +148,6 @@ class Rival:
         shade_num = 0
         shade_f = self.data_dir + "/shade_" + str(shade_num) + ".png"
         while os.path.isfile(shade_f):
-            print(shade_f)
             shade = cv2.imread(shade_f, cv2.IMREAD_UNCHANGED)
             if shade is None:
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), shade_f)
@@ -76,12 +171,30 @@ class Rival:
         return str(self)
 
     def create_skin_from_colors(self, colors : List[ColorRGB] = []):
+        """
+        Creates new Skin with the suplied colors. If the numbers of colors does not match the rival it returns nothing.
+        
+        Parameters
+        ----------
+
+        colors : [ColorRGB]
+        """
         if len(colors) != self.shade_num:
-            return
+            return None
         else:
             return Skin(self, colors)
 
     def create_skin_from_code(self, code):
+        """
+        Create a skin from a color code string. If the code is invalid, return None.
+        
+        Parameters
+        ----------
+
+        code: str
+        
+        
+        """
         n = int(self.shade_num * 1.5)
         pattern = "^[a-fA-F0-9]{4}(\-[a-fA-F0-9]{4}){" + str(n) +"}$"
         p = re.compile(pattern)
@@ -112,6 +225,10 @@ class Rival:
         return Skin(self, colors)
 
     def create_random_skin(self):
+        """
+        Creates a skin with random colors
+        
+        """
         colors = []
         for i in range(self.shade_num):
             r = abs(random.randint(0,255))
@@ -122,7 +239,26 @@ class Rival:
 
 
 class Skin:
+    """
+|
+
+    Class to represent a Skin for a Rival.
+
+    Attributes
+    ----------
+
+    colors_rgb: [ColorRGB]
+        Shade colors of the skin
+    rival: Rival
+        The rival this skin belongs to
+
+
+    """
     def __init__(self, rival : Rival, colors_rgb : List[ColorRGB]):
+        """
+        Create a skin described by the colors_rgb. If the number of colors does not match to the rival, raise exception WRONG_COLORS.
+        
+        """
         if len(colors_rgb) != rival.shade_num:
             raise WRONG_COLORS
         self.colors_rgb = colors_rgb
@@ -132,6 +268,10 @@ class Skin:
 
 
     def get_preview(self):
+        """
+        Return an opencv preview image. Generates the image if it hasn't been generated yet.
+        
+        """
         if not (self.__preview is None):
             return self.__preview
         # load files
@@ -174,15 +314,32 @@ class Skin:
         return self.__preview
 
     def save_preview(self, file_name : str):
+        """
+        Save preview image to file. Generates preview if it hasn't been generated yet.
+    
+        Parameters
+        ----------
+
+        file_name: str
+        
+        """
         cv2.imwrite(file_name, self.get_preview())
         return
 
     def show_preview(self):
+        """
+        Show preview in a window. Wait for a Keypress to close the window. Generates preview if it hasn't been generated yet.
+        
+        """
         cv2.imshow(str(self), self.get_preview())
         cv2.waitKey(0)
         return
 
     def __str__(self):
+        """
+        Return Rivals of Aether Color Code format string.
+        
+        """
         if not self.code:
             counter = 0
             self.code = ""
@@ -209,6 +366,7 @@ class Skin:
     
     def __repr__(self):
         return str(self.rival) + ": " + str(self)
+
 
 # https://stackoverflow.com/a/59211216
 def overlay_images(foreground : np.ndarray, background : np.ndarray):
@@ -238,7 +396,6 @@ def load_rival_from_json(file : str):
         f.close()
         return rival
     except OSError:
-        print("exception")
         return
 
 _rivals = {}
@@ -247,7 +404,6 @@ def rivals():
     if _rivals == {}:
         for filename in os.listdir(os.path.dirname(__file__) + "/data/"):
             rival_dict = load_rival_from_json(os.path.dirname(__file__) + "/data/"+filename+"/rival.json")
-            print(rival_dict)
             if rival_dict:
                 rival = Rival(rival_dict['name'], rival_dict['aliases'], os.path.dirname(__file__)+"/"+rival_dict['data_dir'])
                 _rivals[rival.name] = rival
