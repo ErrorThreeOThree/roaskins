@@ -11,7 +11,7 @@ setup(
     long_description_content_type='text/markdown',
     name = 'roaskins',
     packages = ['roaskins'],
-    version = '1.0',
+    version = '1.01',
     license = 'MIT',
     description = 'Rivals of Aether skin and color code library',
     author = 'Julian Hartmer',
@@ -25,7 +25,7 @@ setup(
         'numpy'
     ],
     classifiers = [
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable  ',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
